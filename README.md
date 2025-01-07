@@ -16,14 +16,14 @@ Proyek ini penting karena:
 
 - Mempercepat proses klasifikasi kualitas inti sawit: Dengan menggunakan teknik clustering, proses pengelompokan kualitas inti sawit dapat dilakukan secara otomatis dan lebih cepat, tanpa harus menunggu seluruh sampel selesai diuji secara manual.
 - Memberikan rekomendasi kualitas minyak sawit secara real-time: Proyek ini membantu mengidentifikasi minyak sawit dengan kualitas yang baik, serta memberikan wawasan tentang langkah-langkah yang dapat diambil untuk meningkatkan kualitas minyak yang berada di bawah standar.
-- Mengidentifikasi minyak sawit berkualitas buruk lebih awal: Dengan clustering, kelompok inti sawit dengan karakteristik yang menunjukkan kualitas buruk dapat dideteksi lebih cepat, sehingga tindakan perbaikan dapat segera dilakukan.
+- Mengidentifikasi minyak sawit berkualitas buruk lebih awal: Dengan clustering, kelompok inti sawit dengan karakteristik yang menunjukkan kualitas buruk dapat dideteksi lebih cepat, sehingga tindakan lanjut dapat segera dilakukan.
 
 ## Business Understanding
 
 ### Problem Statements
 
-- Bagaimana kita dapat melakukan clustering untuk mengelompokkan kualitas inti sawit (kernel) berdasarkan data yang disediakan oleh mesin Foss NIRS, sehingga membantu mengidentifikasi kualitas minyak lebih awal tanpa harus menunggu seluruh proses pengujian selesai
-- Bagaimana kita dapat menganalisis dan membandingkan kualitas minyak secara keseluruhan di pabrik secara lebih efektif, sehingga memberikan wawasan tentang kualitas minyak baik, minyak yang masih bisa ditingkatkan, dan minyak berkualitas buruk?
+- Bagaimana kita dapat melakukan clustering untuk mengelompokkan kualitas inti sawit (kernel) berdasarkan data yang disediakan oleh mesin Foss NIRS, sehingga membantu mengidentifikasi kualitas minyak lebih awal tanpa harus menunggu seluruh proses pengujian selesai?
+- Bagaimana kita dapat menganalisis dan membandingkan kualitas inti secara keseluruhan di pabrik secara lebih efektif, sehingga memberikan wawasan tentang kualitas baik, kualitas masih bisa ditingkatkan, dan kualitas buruk?
 
 ### Goals
 
@@ -96,96 +96,107 @@ Pada tahap ini akan membahas pendekatan K-Means Clustering. Berikut adalah penje
 
 Tahapan Proses K-Means Clustering :
 
-1. Menggunakan Elbow Method untuk mencari nilai K
+1. **Menggunakan Elbow Method untuk mencari nilai K**
 
-```python
-inertia = []
-K = range(1, 10)
-for k in K:
-    kmeans = KMeans(n_clusters=k, random_state=42)
-    kmeans.fit(data_pca)
-    inertia.append(kmeans.inertia_)
+   ```python
+   inertia = []
+   K = range(1, 10)
+   for k in K:
+       kmeans = KMeans(n_clusters=k, random_state=42)
+       kmeans.fit(data_pca)
+       inertia.append(kmeans.inertia_)
 
-# Visualisasi
-plt.figure(figsize=(8, 5))
-plt.plot(K, inertia, 'bo-', markersize=8)
-plt.xlabel('Jumlah Cluster (k)')
-plt.ylabel('Inertia')
-plt.title('Elbow Method untuk Menentukan Jumlah Cluster Optimal')
-plt.grid(True)
-plt.show()
-```
+   # Visualisasi
+   plt.figure(figsize=(8, 5))
+   plt.plot(K, inertia, 'bo-', markersize=8)
+   plt.xlabel('Jumlah Cluster (k)')
+   plt.ylabel('Inertia')
+   plt.title('Elbow Method untuk Menentukan Jumlah Cluster Optimal')
+   plt.grid(True)
+   plt.show()
+   ```
 
-Hasil Elbow method sperti berikut
-![Elbow Method](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/ElbowMethod.png)
+   Hasil Elbow method sperti berikut
+   ![Elbow Method](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/ElbowMethod.png)
 
-dari gambar tersebut bisa diambil nilai K yang bagus adalah 2
+   Dari gambar tersebut bisa diambil nilai K yang paling optimal adalah 2
 
-Namun dalam case ini mencoba menggunakan 3 cluster karena mendekati standarisasi pembagian yang ada di lapangan yaitu kandungan buruk, kandungan baik, dan kandungan yang bisa ditingkatkan.
+   Namun dalam case ini kami mencoba menggunakan 3 cluster karena mendekati standarisasi pembagian yang ada di lapangan yaitu kualitas buruk, kualitas bagus, dan kualitas masih bisa ditingkatkan.
 
-2. Menggunakan nilai K yang telah ditentukan untuk melakukan K-Means Clustering
+2. **Menggunakan nilai K yang telah ditentukan untuk melakukan K-Means Clustering**
 
-Pada tahap menuggnakan K-Means Clustering dengan nilai K yang diambil dari perbantuan Elbow Method diatas dilakukan dua kali percobaan yaitu menggunakan nilai K = 2 dan K =3
+   Pada tahap menuggnakan K-Means Clustering dengan nilai K yang diambil dari perbantuan Elbow Method diatas dilakukan dua kali percobaan yaitu menggunakan nilai K = 2 dan K =3
 
-Untuk Penggunakan nilai K = 2 pada K-Menas Clustering
+   Untuk Penggunakan nilai K = 2 pada K-Menas Clustering
 
-```python
-optimal_k = 2
-kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-data_inliers['Cluster'] = kmeans.fit_predict(data_pca)
+   ```python
+   optimal_k = 2
+   kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+   data_inliers['Cluster'] = kmeans.fit_predict(data_pca)
 
-#Visualisasi Cluster
-plt.figure(figsize=(10, 6))
-for cluster in range(optimal_k):
-    plt.scatter(data_pca[data_inliers['Cluster'] == cluster, 0],
-                data_pca[data_inliers['Cluster'] == cluster, 1],
-                label=f'Cluster {cluster}', alpha=0.7, s=100)
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.title('Visualisasi Clustering setelah Penanganan Outliers, PCA, dan Normalisasi')
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-```
+   #Visualisasi Cluster
+   plt.figure(figsize=(10, 6))
+   for cluster in range(optimal_k):
+       plt.scatter(data_pca[data_inliers['Cluster'] == cluster, 0],
+                   data_pca[data_inliers['Cluster'] == cluster, 1],
+                   label=f'Cluster {cluster}', alpha=0.7, s=100)
+   plt.xlabel('Principal Component 1')
+   plt.ylabel('Principal Component 2')
+   plt.title('Visualisasi Clustering setelah Penanganan Outliers, PCA, dan Normalisasi')
+   plt.legend()
+   plt.grid(True)
+   plt.tight_layout()
+   plt.show()
+   ```
 
-Hasilnya seperti berikut :
-![KMeansClusterKeq2](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/KMeansClusterKeq2.png)
+   Hasilnya seperti berikut :
+   ![KMeansClusterKeq2](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/KMeansClusterKeq2.png)
 
-Untuk Penggunakan nilai K = 3 pada K-Menas Clustering
+   Untuk Penggunakan nilai K = 3 pada K-Means Clustering
 
-```python
-optimal_k = 3
-kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-data_inliers['Cluster'] = kmeans.fit_predict(data_pca)
+   ```python
+   optimal_k = 3
+   kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+   data_inliers['Cluster'] = kmeans.fit_predict(data_pca)
 
-#Visualisasi Cluster
-plt.figure(figsize=(10, 6))
-for cluster in range(optimal_k):
-    plt.scatter(data_pca[data_inliers['Cluster'] == cluster, 0],
-                data_pca[data_inliers['Cluster'] == cluster, 1],
-                label=f'Cluster {cluster}', alpha=0.7, s=100)
-plt.xlabel('Principal Component 1')
-plt.ylabel('Principal Component 2')
-plt.title('Visualisasi Clustering setelah Penanganan Outliers, PCA, dan Normalisasi')
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
-```
+   #Visualisasi Cluster
+   plt.figure(figsize=(10, 6))
+   for cluster in range(optimal_k):
+       plt.scatter(data_pca[data_inliers['Cluster'] == cluster, 0],
+                   data_pca[data_inliers['Cluster'] == cluster, 1],
+                   label=f'Cluster {cluster}', alpha=0.7, s=100)
+   plt.xlabel('Principal Component 1')
+   plt.ylabel('Principal Component 2')
+   plt.title('Visualisasi Clustering setelah Penanganan Outliers, PCA, dan Normalisasi')
+   plt.legend()
+   plt.grid(True)
+   plt.tight_layout()
+   plt.show()
+   ```
 
-Hasilnya seperti berikut :
-![KMeansClusterKeq3](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/KMeansClusterKeq3.png)
+   Hasilnya seperti berikut :
+   ![KMeansClusterKeq3](https://github.com/jakabaskara/clustering-kualitas-minyak-pada-inti-sawit/blob/main/image/KMeansClusterKeq3.png)
 
-**Kelebihan dan Kekurangan Pendekatan**
+   Dan dapat dilihat walaupun secara elbow method memberikan visualisasi jika k = 2 adalah nilai optimal, namun itu tidak menutup kemungkinan untuk k=3 karena secara visual datanya tercluster dengan baik.
 
 ## Evaluation
 
-**Metrik Evaluasi**
+**Silhouette Score:**
+Berdasarkan hasil pengujian Silhouette Score berada di angka **0.32** yang berarti Clustering Cukup atau tidak buruk tetapi juga menunjukkan bahwa clustering Anda memiliki ruang untuk perbaikan.
 
-**Hasil Proyek**
+**Davies-Bouldin Index:** Score Menunjukan di angka **1.06** menunjukkan clustering cukup baik, dengan cluster yang rapat secara internal dan cukup terpisah dari cluster lainnya.
 
 ## Kesimpulan
+
+1. **Identifikasi Cluster Lebih Awal pada Inti Sawit.**
+   Proses clustering yang diterapkan pada data inti sawit dari mesin Foss NIRS memungkinkan identifikasi kategori kualitas minyak lebih awal, bahkan sebelum proses ekstraksi minyak selesai. Hal ini memberikan manfaat besar dibandingkan metode konvensional yang hanya mengandalkan ALB (Asam Lemak Bebas) di tahap akhir proses.
+2. **Pengelompokan Berdasarkan Karakteristik Kualitas.** Clustering berhasil mengelompokkan inti sawit ke dalam tiga kategori, yaitu:
+
+   - **Kualitas Buruk:** Inti sawit dengan kandungan minyak rendah atau kualitas tidak memenuhi standar.
+   - **Kualitas Masih Dapat Ditingkatkan:** Inti sawit dengan kualitas sedang yang masih memiliki potensi untuk diperbaiki.
+   - **Kualitas Baik:** Inti sawit dengan kandungan minyak tinggi dan kualitas yang memenuhi standar.
+
+   Hal ini memberikan informasi yang lebih kaya dibandingkan hanya mempertimbangkan ALB sebagai satu-satunya indikator kualitas.
 
 ## Referensi
 
